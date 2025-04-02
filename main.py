@@ -63,7 +63,19 @@ def delete_post(id: int):
     print(idx)
     if idx is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND
-                            , detail=f'id {id} was not found')
+                            , detail=f'post id={id} does not exist')
     # print(idx)
     my_posts.pop(idx)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return Response(status_code=status.HTTP_204_NO_CONTENT) 
+
+
+@app.put('/posts/{id}')
+def update_post(id: int, payload: dict = Body(...)):
+    idx = find_index_post(id)
+    post = my_posts.pop(idx)
+    # post['title'] = "I made you better"
+    if payload is not None:
+        for k,v in payload.items():
+            post[k]=v
+    my_posts.append(post)
+    return {'message': f'post id {id} has been updated'}
