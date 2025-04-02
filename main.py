@@ -9,8 +9,9 @@ app = FastAPI()
 class Post(BaseModel):
     title: str
     content: str
-    published: bool = True
-    rating: Optional[int] = None
+    # published: bool = True
+    # rating: Optional[int] = None
+    # id: int
  
 
 my_posts = [{"title": f"title of post {i}", "content": f"content post {i}", "id": (i-2)} for i in range(10,2,-1)]
@@ -41,7 +42,7 @@ def get_posts():
 def create_posts(post: Post):
     post_dict = post.model_dump()
     post_dict['id'] = randrange(2,100_000_000) 
-    my_posts.append(post_dict)
+    my_posts.append(post_dict) 
     return {"data": post_dict}
  
  
@@ -70,12 +71,19 @@ def delete_post(id: int):
 
 
 @app.put('/posts/{id}')
-def update_post(id: int, payload: dict = Body(...)):
+def update_post(id: int, post: Post):
     idx = find_index_post(id)
-    post = my_posts.pop(idx)
+    if idx is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND
+                            , detail= f'post id={id} does not exist')
+    post_needing_update = my_posts.pop(idx)
+    post_needing_update['id'] = id
+    print(post_needing_update)
     # post['title'] = "I made you better"
-    if payload is not None:
-        for k,v in payload.items():
-            post[k]=v
-    my_posts.append(post)
+    if post is not None:
+        post_dict = post.model_dump()
+        print(post_dict)
+        for k,v in post_dict.items():
+            post_needing_update[k]=v
+    my_posts.append(post_needing_update)
     return {'message': f'post id {id} has been updated'}
