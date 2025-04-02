@@ -17,8 +17,10 @@ my_posts = [{"title": f"title of post {i}", "content": f"content post {i}", "id"
 
 # print(my_posts)
 
-def find_post(id: int): 
-    return [l for l in my_posts if l['id'] == id][0]
+def find_post(id): 
+    for l in my_posts:
+        if l['id'] == id:
+            return l
 
 
 @app.get("/")
