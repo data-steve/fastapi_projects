@@ -20,7 +20,7 @@ while True:
     except KeyboardInterrupt: 
         print("Stopped by user")
     except Exception as error:
-        print(f"Error çconnecting to database:\n\tError = {error}")
+        print(f"Error connecting to database:\n\tError = {error}")
         time.sleep(2)
         
 my_posts = [{"title": f"title of post {i}", "content": f"content post {i}", "id": (i-2)} for i in range(10,2,-1)]
@@ -29,7 +29,7 @@ my_posts = [{"title": f"title of post {i}", "content": f"content post {i}", "id"
 class Post(BaseModel):
     title: str
     content: str
-    # published: bool = True
+    published: bool = True
     # rating: Optional[int] = None
     # id: int
  
@@ -62,10 +62,12 @@ def get_posts():
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_posts(post: Post):
-    post_dict = post.model_dump()
-    post_dict['id'] = randrange(2,100_000_000) 
-    my_posts.append(post_dict) 
-    return {"data": post_dict}
+    # don't use f-strings b/c that's how sql-injection works
+    cursor.execute("""INSERT into posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """, 
+                   (post.title, post.content, post.published))
+    new_post = cursor.fetchone()
+    # print(cmd)
+    return {"data": new_post}
  
  
 @app.get("/posts/{id}")
