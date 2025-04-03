@@ -1,7 +1,7 @@
 
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import List
 
 class PostBase(BaseModel):
     title: str
@@ -28,5 +28,11 @@ class UserCreate(BaseModel):
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
+    class Config:
+        from_attributes = True
+        
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
     class Config:
         from_attributes = True
