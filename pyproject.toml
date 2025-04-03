@@ -12,6 +12,8 @@ dependencies = [
     "fastapi[all] (>=0.115.12,<0.116.0)",
     "sqlalchemy (==1.4.23)",
     "psycopg2-binary (>=2.9.10,<3.0.0)",
+    "passlib[bcrypt] (>=1.7.4,<2.0.0)",
+    "bcrypt (<4.1)",
 ]
 
 
