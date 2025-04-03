@@ -5,9 +5,12 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import schemas, models
  
-router = APIRouter()
+router = APIRouter(
+    prefix='/posts',
+    tags=["Posts"]
+)
 
-@router.get("/posts", response_model=List[schemas.PostResponse])  
+@router.get("/", response_model=List[schemas.PostResponse])  
 def get_posts(db: Session = Depends(get_db)):
     # raw sql via psycog version
     # cursor.execute("""SELECT * FROM posts """)
@@ -17,7 +20,7 @@ def get_posts(db: Session = Depends(get_db)):
     return posts
 
 
-@router.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
 def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     # raw sql via psycog version
     # cursor.execute("""INSERT into posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """,  (post.title, post.content, post.published)) 
@@ -31,7 +34,7 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     return new_post
 
 
-@router.get("/posts/{id}", response_model=schemas.PostResponse)
+@router.get("/{id}", response_model=schemas.PostResponse)
 def get_post(id: int, db: Session = Depends(get_db)):
     # cursor.execute("""SELECT * FROM posts WHERE id = %s  """, (str(id),))
     # post = cursor.fetchone()
@@ -43,7 +46,7 @@ def get_post(id: int, db: Session = Depends(get_db)):
     return post
 
 
-@router.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int, db: Session = Depends(get_db)):
     # # delete via find index and pop
     # idx = find_index_post(id) 
@@ -62,7 +65,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT) 
 
 
-@router.put('/posts/{id}', response_model=schemas.PostResponse)
+@router.put('/{id}', response_model=schemas.PostResponse)
 def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
     # cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""", (post.title, post.content, post.published, str(id)))
     # updated_post = cursor.fetchone()
