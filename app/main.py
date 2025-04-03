@@ -62,52 +62,46 @@ def get_posts():
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_posts(post: Post):
-    # don't use f-strings b/c that's how sql-injection works
-    cursor.execute("""INSERT into posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """, 
-                   (post.title, post.content, post.published))
+    cursor.execute("""INSERT into posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """,  (post.title, post.content, post.published))
     new_post = cursor.fetchone()
+    conn.commit()
     # print(cmd)
     return {"data": new_post}
  
  
 @app.get("/posts/{id}")
 def get_post(id: int):
-    post = find_post(id)
+    cursor.execute("""SELECT * FROM posts WHERE id = %s  """, (str(id),))
+    post = cursor.fetchone()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND
                             , detail=f'id {id} was not found' )
-        # response.status_code = status.HTTP_404_NOT_FOUND
-        # return {'error':f'id {id} was not found'}
     return {"post_detail": post  }
 
 
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
     # delete via find index and pop
-    idx = find_index_post(id)
-    print(idx)
-    if idx is None:
+    idx = find_index_post(id) 
+    cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING *""", (str(id),))
+    deleted_post = cursor.fetchone()
+
+    if deleted_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND
                             , detail=f'post id={id} does not exist')
     # print(idx)
-    my_posts.pop(idx)
+    conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT) 
 
 
 @app.put('/posts/{id}')
 def update_post(id: int, post: Post):
-    idx = find_index_post(id)
-    if idx is None:
+    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""", (post.title, post.content, post.published, str(id)))
+    updated_post = cursor.fetchone()
+    conn.commit()
+    
+    if updated_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND
                             , detail= f'post id={id} does not exist')
-    post_needing_update = my_posts.pop(idx)
-    post_needing_update['id'] = id
-    print(post_needing_update)
-    # post['title'] = "I made you better"
-    if post is not None:
-        post_dict = post.model_dump()
-        print(post_dict)
-        for k,v in post_dict.items():
-            post_needing_update[k]=v
-    my_posts.append(post_needing_update)
-    return {'message': f'post id {id} has been updated'}
+    
+    return {'data': updated_post} 
