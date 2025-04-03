@@ -22,8 +22,7 @@ while True:
     try: 
         conn = psycopg2.connect("host=localhost dbname=fastapi user=postgres password=postgres",
                             #    row_factory=dict_row
-                            cursor_factory=RealDictCursor
-                               )
+                            cursor_factory=RealDictCursor)
         cursor = conn.cursor()
         print("Database connection wa s successful!")
         break
@@ -60,31 +59,40 @@ def find_index_post(id):
 
 @app.get("/")
 def root():
-    return {'message':'all good'}
+    return {'message':'all good'} 
 
 
-@app.get('/sqlalchemy')
+@app.get('/sqlalchemy')  
 def test_post( db: Session = Depends(get_db) ):
-    return {'status':'success'}
+    posts = db.query(models.Post).all()
+    
+    return {'data':posts}
 
 
 @app.get("/posts")  
-def get_posts():
-    cursor.execute("""SELECT * FROM posts """)
-    posts = cursor.fetchall()
+def get_posts(db: Session = Depends(get_db)):
+    # raw sql via psycog version
+    # cursor.execute("""SELECT * FROM posts """)
+    # posts = cursor.fetchall()
     # print(posts)
+    posts = db.query(models.Post).all()
     return {"data": posts}
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: Post):
-    cursor.execute("""INSERT into posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """,  (post.title, post.content, post.published))
-    new_post = cursor.fetchone()
-    conn.commit()
-    # print(cmd)
+def create_posts(post: Post, db: Session = Depends(get_db)):
+    # raw sql via psycog version
+    # cursor.execute("""INSERT into posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """,  (post.title, post.content, post.published)) 
+    # new_post = cursor.fetchone()
+    # conn.commit()
+    # new_post = models.Post(title=post.title, content=post.content, published=post.published)
+    new_post = models.Post(**post.model_dump())
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
     return {"data": new_post}
- 
- 
+
+
 @app.get("/posts/{id}")
 def get_post(id: int):
     cursor.execute("""SELECT * FROM posts WHERE id = %s  """, (str(id),))
@@ -119,5 +127,4 @@ def update_post(id: int, post: Post):
     if updated_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND
                             , detail= f'post id={id} does not exist')
-    
     return {'data': updated_post} 
