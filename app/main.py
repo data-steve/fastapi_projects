@@ -1,20 +1,49 @@
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Response, status
+from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.params import Body
 from pydantic import BaseModel
-from random import randrange
+from random import randrange 
+
+
+# import psycopg
+# from psycopg.rows import dict_row
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from sqlalchemy.orm import Session
+from .database import engine, get_db
+from . import models
+import time
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+while True:
+    try: 
+        conn = psycopg2.connect("host=localhost dbname=fastapi user=postgres password=postgres",
+                            #    row_factory=dict_row
+                            cursor_factory=RealDictCursor
+                               )
+        cursor = conn.cursor()
+        print("Database connection wa s successful!")
+        break
+    except KeyboardInterrupt: 
+        print("Stopped by user")
+    except Exception as error:
+        print(f"Error connecting to database:\n\tError = {error}")
+        time.sleep(2)
+        
+my_posts = [{"title": f"title of post {i}", "content": f"content post {i}", "id": (i-2)} for i in range(10,2,-1)]
+
 
 class Post(BaseModel):
     title: str
     content: str
-    # published: bool = True
+    published: bool = True
     # rating: Optional[int] = None
     # id: int
  
 
-my_posts = [{"title": f"title of post {i}", "content": f"content post {i}", "id": (i-2)} for i in range(10,2,-1)]
 
 # print(my_posts)
 
@@ -33,57 +62,62 @@ def find_index_post(id):
 def root():
     return {'message':'all good'}
 
+
+@app.get('/sqlalchemy')
+def test_post( db: Session = Depends(get_db) ):
+    return {'status':'success'}
+
+
 @app.get("/posts")  
 def get_posts():
-    return {"data": my_posts}
+    cursor.execute("""SELECT * FROM posts """)
+    posts = cursor.fetchall()
+    # print(posts)
+    return {"data": posts}
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_posts(post: Post):
-    post_dict = post.model_dump()
-    post_dict['id'] = randrange(2,100_000_000) 
-    my_posts.append(post_dict) 
-    return {"data": post_dict}
+    cursor.execute("""INSERT into posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """,  (post.title, post.content, post.published))
+    new_post = cursor.fetchone()
+    conn.commit()
+    # print(cmd)
+    return {"data": new_post}
  
  
 @app.get("/posts/{id}")
 def get_post(id: int):
-    post = find_post(id)
+    cursor.execute("""SELECT * FROM posts WHERE id = %s  """, (str(id),))
+    post = cursor.fetchone()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND
                             , detail=f'id {id} was not found' )
-        # response.status_code = status.HTTP_404_NOT_FOUND
-        # return {'error':f'id {id} was not found'}
     return {"post_detail": post  }
 
 
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
     # delete via find index and pop
-    idx = find_index_post(id)
-    print(idx)
-    if idx is None:
+    idx = find_index_post(id) 
+    cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING *""", (str(id),))
+    deleted_post = cursor.fetchone()
+
+    if deleted_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND
                             , detail=f'post id={id} does not exist')
     # print(idx)
-    my_posts.pop(idx)
+    conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT) 
 
 
 @app.put('/posts/{id}')
 def update_post(id: int, post: Post):
-    idx = find_index_post(id)
-    if idx is None:
+    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""", (post.title, post.content, post.published, str(id)))
+    updated_post = cursor.fetchone()
+    conn.commit()
+    
+    if updated_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND
                             , detail= f'post id={id} does not exist')
-    post_needing_update = my_posts.pop(idx)
-    post_needing_update['id'] = id
-    print(post_needing_update)
-    # post['title'] = "I made you better"
-    if post is not None:
-        post_dict = post.model_dump()
-        print(post_dict)
-        for k,v in post_dict.items():
-            post_needing_update[k]=v
-    my_posts.append(post_needing_update)
-    return {'message': f'post id {id} has been updated'}
+    
+    return {'data': updated_post} 
