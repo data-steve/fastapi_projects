@@ -1,6 +1,5 @@
 
 from datetime import datetime
-from xmlrpc.client import boolean
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
