@@ -1,21 +1,31 @@
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Response, status
+from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.params import Body
 from pydantic import BaseModel
 from random import randrange 
 
-import psycopg
-from psycopg.rows import dict_row
+
+# import psycopg
+# from psycopg.rows import dict_row
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from sqlalchemy.orm import Session
+from .database import engine, get_db
+from . import models
 import time
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
 while True:
     try: 
-        conn = psycopg.connect("host=localhost dbname=fastapi user=postgres password=postgres",
-                               row_factory=dict_row)
+        conn = psycopg2.connect("host=localhost dbname=fastapi user=postgres password=postgres",
+                            #    row_factory=dict_row
+                            cursor_factory=RealDictCursor
+                               )
         cursor = conn.cursor()
-        print("Database connection was successful!")
+        print("Database connection wa s successful!")
         break
     except KeyboardInterrupt: 
         print("Stopped by user")
@@ -51,6 +61,12 @@ def find_index_post(id):
 @app.get("/")
 def root():
     return {'message':'all good'}
+
+
+@app.get('/sqlalchemy')
+def test_post( db: Session = Depends(get_db) ):
+    return {'status':'success'}
+
 
 @app.get("/posts")  
 def get_posts():
