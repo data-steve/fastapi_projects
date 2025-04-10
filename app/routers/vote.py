@@ -37,7 +37,3 @@ def vote(vote: schemas.Vote, db: Session = Depends(database.get_db), current_use
             vote_query.delete(synchronize_session=False)
             db.commit()
         return {"message": "successfully deleted vote"}
-    
-    
-# If user likes/unlikes post, check that vote's user_id,post_id exists, if so then unlike, else like.  But really if already liked, should be don't do anything / raise Error
-    
