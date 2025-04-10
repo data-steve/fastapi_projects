@@ -1,13 +1,11 @@
-from typing import Optional
+from typing import Literal, Optional
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
 class PostBase(BaseModel):
     title: str
     content: str
-    published: bool = True
-    # rating: Optional[int] = None
-    # id: int
+    published: bool = True 
 
 class PostCreate(PostBase):
     pass
@@ -44,3 +42,7 @@ class Token(BaseModel):
     
 class TokenData(BaseModel):
     id: Optional[str] = None
+    
+class Vote(BaseModel):
+    post_id: int
+    dir: Literal[0, 1]
