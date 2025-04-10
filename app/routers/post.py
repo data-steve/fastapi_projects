@@ -1,10 +1,6 @@
-
 from typing import List, Optional
 from fastapi import Depends, HTTPException, Response, status, APIRouter
-from numpy import dtype
 from sqlalchemy.orm import Session
-
-
 from ..database import get_db
 from .. import schemas, models, oauth2
  
