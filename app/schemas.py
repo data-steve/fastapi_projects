@@ -6,6 +6,9 @@ class PostBase(BaseModel):
     title: str
     content: str
     published: bool = True 
+    
+    class Config:
+        from_attributes = True 
 
 class PostCreate(PostBase):
     pass
@@ -15,6 +18,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     class Config:
         from_attributes = True
+
 class PostResponse(PostBase):
     id : int
     created_at : datetime
@@ -22,6 +26,15 @@ class PostResponse(PostBase):
     owner : UserResponse
     class Config:
         from_attributes = True 
+        
+        
+class PostVote(BaseModel):
+    Post : PostResponse
+    votes : int
+    
+    class Config:
+        from_attributes = True 
+        
         
 class UserCreate(BaseModel):
     email: EmailStr
