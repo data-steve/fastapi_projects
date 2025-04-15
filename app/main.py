@@ -26,4 +26,4 @@ app.include_router(vote.router)
 
 @app.get("/")
 def healthcheck():
-    return {'message':'all good'} 
+    return {'message':'all good.. still'} 
