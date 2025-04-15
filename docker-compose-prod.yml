@@ -1,6 +1,6 @@
 services:
   api:
-    build: .
+    image: steventroysimpson/fastapi
     depends_on:
       - db
     ports:
