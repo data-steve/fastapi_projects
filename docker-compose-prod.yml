@@ -1,0 +1,38 @@
+services:
+  api:
+    image: steventroysimpson/fastapi
+    depends_on:
+      - db
+    ports:
+      - 80  :8000 
+    environment:
+    - DATABASE_HOSTNAME=${DATABASE_HOSTNAME}
+    - DATABASE_PORT=${DATABASE_PORT}
+    - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+    - DATABASE_NAME=${DATABASE_NAME}
+    - DATABASE_USERNAME=${DATABASE_USERNAME}
+  db:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: ${DATABASE_PASSWORD}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
