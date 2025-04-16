@@ -12,7 +12,7 @@ router = APIRouter(
 
 @router.get("/", response_model=List[schemas.PostVote])  
 # @router.get("/") 
-def get_posts(db: Session = Depends(get_db), limit: int = 3, skip:int = 0, search: Optional[str] = ""):
+def get_posts(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 3, skip:int = 0, search: Optional[str] = ""):
         # raw sql via psycog version
         # cursor.execute("""SELECT * FROM posts """)
         # posts = cursor.fetchall() 
