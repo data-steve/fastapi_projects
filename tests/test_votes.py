@@ -1,13 +1,6 @@
-from app import schemas, models
+from app import models
 import pytest 
 
-# test_vote_not_authorized
-# test_vote_post_does_not_exist
-# test_vote_user_does_not_exist
-# test_vote_up_success     xxx 
-# test_vote_down_success   xxx
-# test_vote_up_fail
-# test_vote_down_fail
 
 @pytest.fixture
 def test_vote(test_posts, test_user, session):
