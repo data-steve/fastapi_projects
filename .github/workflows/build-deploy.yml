@@ -1,4 +1,4 @@
-name: Buidl and deploy code
+name: Build and deploy code
 
 on: [push, pull_request]
   # pull_request:
@@ -12,8 +12,9 @@ jobs:
       - name: pull git repo 
         uses: actions/checkout@v4
       - name: load env file contents
-        run: |
-          cat .env >> $GITHUB_ENV
+      - uses: oNaiPs/secrets-to-env-action@v1
+        with:
+          secrets: ${{ toJSON(secrets) }}
       - name: set up python v3.12
         uses: actions/setup-python@v5
         with:
