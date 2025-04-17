@@ -1,4 +1,3 @@
-from sqlite3 import connect
 from app import schemas
 import json
 import pytest 
