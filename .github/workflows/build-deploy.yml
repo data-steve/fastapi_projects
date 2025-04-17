@@ -12,7 +12,7 @@ jobs:
       - name: pull git repo 
         uses: actions/checkout@v4
       - name: load env file contents
-      - uses: oNaiPs/secrets-to-env-action@v1
+        uses: oNaiPs/secrets-to-env-action@v1
         with:
           secrets: ${{ toJSON(secrets) }}
       - name: set up python v3.12
