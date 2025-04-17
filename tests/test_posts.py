@@ -84,3 +84,35 @@ def test_unauthorized_user_delete_post(client, test_user, test_posts):
     res = client.delete(f'/posts/{test_posts[0].id}')
     assert res.status_code == 401
     assert res.json()['detail'] == 'Not authenticated'
+    
+    
+def test_delete_post_success(authorized_client, test_user, test_posts):
+    res = authorized_client.delete(f'/posts/{test_posts[0].id}')
+    # print(res.status_code)
+    assert res.status_code == 204
+
+def test_delete_post_not_exist(authorized_client, test_user):
+    res = authorized_client.delete(f'/posts/{10000}')
+    assert res.status_code == 404
+
+
+def test_delete_other_users_post(authorized_client, test_user, test_posts):
+    res = authorized_client.delete(f'/posts/{test_posts[3].id}')
+    assert res.status_code == 403
+
+
+def test_unauthorized_user_update_post(client, test_user, test_posts):
+    res = client.put(f'/posts/{test_posts[0].id}')
+    assert res.status_code == 401
+    # assert res.json()['detail'] == 'Not authenticated'
+
+
+def test_update_post_success(authorized_client, test_user, test_posts):
+    res = authorized_client.put(f'/posts/{test_posts[0].id}', json={"title": "totally new title", "content": "totally new title"})
+    # The line `print(res.status_code)` is used to print out the status code of the response received
+    # after making a request in the test case `test_update_post_success`. This helps in debugging and
+    # verifying that the status code returned by the API endpoint matches the expected status code.
+    # print(res.status_code)
+    assert res.status_code == 202
+    
+# def test
