@@ -16,6 +16,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fastapi
     ports:
       - "5432:5432"
     volumes:
@@ -29,10 +30,8 @@ services:
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "8080:80"
-    # volumes:
-    # - pgadmin_data:/var/lib/pgadmin
     volumes:
-      - ./pgadmin_config:/var/lib/pgadmin
+    - pgadmin_data:/var/lib/pgadmin
     depends_on:
       - db
 
