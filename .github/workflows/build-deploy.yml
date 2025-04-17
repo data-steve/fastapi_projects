@@ -11,6 +11,9 @@ jobs:
     steps:
       - name: pull git repo 
         uses: actions/checkout@v4
+      - name: load env file contents
+        run: |
+          cat .env >> $GITHUB_ENV
       - name: set up python v3.12
         uses: actions/setup-python@v5
         with:
