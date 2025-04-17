@@ -11,12 +11,16 @@ from fastapi.testclient import TestClient
 from app.main import app 
 
 # had to run `PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -c "CREATE DATABASE fastapi_test;"` to create fastapi_test database
-SQLALCHEMY_DATABASE_URL_TEST = f'postgresql://{settings.database_username}:{settings.database_password}@{settings.database_hostname}:{settings.database_port}/{settings.database_name}_test'
 
+SQLALCHEMY_DATABASE_URL_TEST = (
+    f"postgresql+psycopg2://"
+    f"{settings.database_username}:{settings.database_password}"
+    f"@{settings.database_hostname}:{settings.database_port}"
+    f"/{settings.database_name}_test"
+)
 engine = create_engine(SQLALCHEMY_DATABASE_URL_TEST)
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 
 @pytest.fixture( )
 def session():
@@ -38,6 +42,7 @@ def client(session):
             session.close()
     app.dependency_overrides[get_db] = override_get_db
     yield TestClient(app)
+
 
 
 
