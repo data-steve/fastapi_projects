@@ -97,6 +97,7 @@ def test_delete_post_not_exist(authorized_client, test_user):
 
 
 def test_delete_other_users_post(authorized_client, test_user, test_posts):
+    # test_posts[3].id is the other user
     res = authorized_client.delete(f'/posts/{test_posts[3].id}')
     assert res.status_code == 403
 
@@ -108,11 +109,29 @@ def test_unauthorized_user_update_post(client, test_user, test_posts):
 
 
 def test_update_post_success(authorized_client, test_user, test_posts):
-    res = authorized_client.put(f'/posts/{test_posts[0].id}', json={"title": "totally new title", "content": "totally new title"})
-    # The line `print(res.status_code)` is used to print out the status code of the response received
-    # after making a request in the test case `test_update_post_success`. This helps in debugging and
-    # verifying that the status code returned by the API endpoint matches the expected status code.
-    # print(res.status_code)
+    data = {"title": "totally new title", "content": "totally new title"}
+    res = authorized_client.put(f'/posts/{test_posts[0].id}', json=data)
+    updated_post = schemas.PostResponse(**res.json())
     assert res.status_code == 202
+    assert updated_post.title == data['title']
+    assert updated_post.content == data['content']
     
-# def test
+
+def test_update_other_users_post(authorized_client, test_user, test_posts):
+    # test_posts[3].id is the other user
+    data = {"title": "totally new title", "content": "totally new title"}
+    res = authorized_client.put(f'/posts/{test_posts[3].id}', json=data)
+    assert res.status_code == 403 
+
+
+def test_unauthorized_user_update_post(client, test_user, test_posts, test_user2):
+    data = {"title": "totally new title", "content": "totally new title"}
+    res = client.put(f'/posts/{test_posts[0].id}', json=data)
+    assert res.status_code == 401
+    assert res.json()['detail'] == 'Not authenticated'
+
+
+def test_update_post_not_exist(authorized_client, test_user):
+    data = {"title": "totally new title", "content": "totally new title"}
+    res = authorized_client.put(f'/posts/{10000}', json =data)
+    assert res.status_code == 404
