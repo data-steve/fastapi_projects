@@ -49,13 +49,20 @@ jobs:
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ./ecs/taskdef.json
+          task-definition:  ecs/test_taskdef.json
           service:          fastapi-service
           cluster:          fastapi-cluster
           wait-for-service-stability: true
-          container-name:  fastapi
+          # container-name:  fastapi
           # container-image: 663610933134.dkr.ecr.us-east-1.amazonaws.com/fastapi_social_media_app:latest
-          container-image: public.ecr.aws/nginx/nginx:latest
+          # container-image: public.ecr.aws/nginx/nginx:latest
+      - name: Tear down ECS
+        run: |
+          aws ecs update-service --cluster $CLUSTER_NAME --service $SERVICE_NAME --desired-count 0 || true
+          aws ecs delete-service --cluster $CLUSTER_NAME --service $SERVICE_NAME --force || true
+          aws ecs delete-cluster --cluster $CLUSTER_NAME || true
+          aws ecr delete-repository --repository-name $ECR_REPOSITORY --force || true
+
 
 
 # jobs:

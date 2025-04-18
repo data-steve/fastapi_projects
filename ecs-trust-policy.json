@@ -1,0 +1,33 @@
+{
+  "Role": {
+      "Path": "/",
+      "RoleName": "github-actions-ecs-deploy",
+      "RoleId": "AROAZVASLH6HHICAX4FGY",
+      "Arn": "arn:aws:iam::663610933134:role/github-actions-ecs-deploy",
+      "CreateDate": "2025-04-18T17:55:39+00:00",
+      "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+              {
+                  "Effect": "Allow",
+                  "Principal": {
+                      "Federated": "arn:aws:iam::663610933134:oidc-provider/token.actions.githubusercontent.com"
+                  },
+                  "Action": "sts:AssumeRoleWithWebIdentity",
+                  "Condition": {
+                      "StringEquals": {
+                          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+                          "token.actions.githubusercontent.com:sub": "repo:data-steve/fastapi_social_media_app:ref:refs/heads/cicd_actions"
+                      }
+                  }
+              }
+          ]
+      },
+      "Description": "trying to fix",
+      "MaxSessionDuration": 3600,
+      "RoleLastUsed": {
+          "LastUsedDate": "2025-04-18T18:10:27+00:00",
+          "Region": "us-east-1"
+      }
+  }
+}

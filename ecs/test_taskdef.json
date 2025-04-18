@@ -1,0 +1,23 @@
+{
+    "family": "fastapi-task",
+    "executionRoleArn": "arn:aws:iam::663610933134:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "containerDefinitions": [
+      {
+        "name": "fastapi",
+        "image": "public.ecr.aws/nginx/nginx:latest",
+        "portMappings": [
+          {
+            "containerPort": 80,
+            "hostPort": 80,
+            "protocol": "tcp"
+          }
+        ],
+        "essential": true
+      }
+    ],
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512"
+  }
+  
