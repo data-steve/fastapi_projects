@@ -52,9 +52,9 @@ jobs:
           parameter-overrides: |
             ClusterName=${{ env.CLUSTER_NAME }}
             ServiceName=${{ env.SERVICE_NAME }}
-            ImageUri=public.ecr.aws/nginx/nginx:latest
-            SubnetIds=subnet-0931e3bf9f6b5c99d,subnet-07eea24ae9bd68fc8
-            SecurityGroupIds=sg-0aeddaa2d09e918e5
+            ImageUri=${{ env.IMAGE_URI }}
+            SubnetIds='subnet-0931e3bf9f6b5c99d,subnet-07eea24ae9bd68fc8'
+            SecurityGroupIds='sg-0aeddaa2d09e918e5'
       
       - name: Register task definition
         run: |
