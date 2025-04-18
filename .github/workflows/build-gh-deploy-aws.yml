@@ -8,7 +8,7 @@ on: [push, pull_request]
 
 permissions:
   contents: read      # default for checkout
-  # id-token: write     # <—— this is the missing piece
+  id-token: write     
 
 env:
   AWS_REGION: us-east-1
@@ -28,9 +28,11 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          # aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
+          role-to-assume: arn:aws:iam::663610933134:role/github-actions-ecs-deploy
+          role-session-name: GitHubActionsSession
 
       - name: Create ECS cluster if not exists
         run: |
