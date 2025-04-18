@@ -24,7 +24,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMAGE_TAG: latest
+
     steps:
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::663610933134:role/github-actions-ecs-deploy
+          aws-region: us-east-1
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -47,7 +53,8 @@ jobs:
           cluster:          fastapi-cluster
           wait-for-service-stability: true
           container-name:  fastapi
-          container-image: 663610933134.dkr.ecr.us-east-1.amazonaws.com/fastapi_social_media_app:latest
+          # container-image: 663610933134.dkr.ecr.us-east-1.amazonaws.com/fastapi_social_media_app:latest
+          container-image: public.ecr.aws/nginx/nginx:latest
 
 
 # jobs:
