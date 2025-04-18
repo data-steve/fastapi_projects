@@ -49,7 +49,7 @@ jobs:
           template: .github/ecs/ecs-stack.yml
           capabilities: CAPABILITY_NAMED_IAM
           no-fail-on-empty-changeset: true
-          parameter-overrides: |
+          parameter-overrides: >
             ClusterName=${{ env.CLUSTER_NAME }}
             ServiceName=${{ env.SERVICE_NAME }}
             ImageUri=${{ env.IMAGE_URI }}
