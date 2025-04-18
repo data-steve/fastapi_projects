@@ -8,7 +8,7 @@ on: [push, pull_request]
 
 permissions:
   contents: read      # default for checkout
-  id-token: write     # <—— this is the missing piece
+  # id-token: write     # <—— this is the missing piece
 
 env:
   AWS_REGION: us-east-1
