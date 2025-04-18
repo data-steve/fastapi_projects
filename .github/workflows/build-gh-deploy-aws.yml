@@ -40,7 +40,19 @@ jobs:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::663610933134:role/github-actions-ecs-deploy
           role-session-name: GitHubActionsSession
-
+      - name: Deploy CloudFormation stack
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: fastapi-ecs-stack
+          template: ecs/ecs-stack.yml
+          capabilities: CAPABILITY_NAMED_IAM
+          no-fail-on-empty-changeset: true
+          parameter-overrides: |
+            ClusterName=${{ env.CLUSTER_NAME }}
+            ServiceName=${{ env.SERVICE_NAME }}
+            ImageUri=public.ecr.aws/nginx/nginx:latest
+            SubnetIds=subnet-0931e3bf9f6b5c99d,subnet-07eea24ae9bd68fc8
+            SecurityGroupIds=sg-0aeddaa2d09e918e5
       - name: Create ECS cluster if not exists
         run: |
           aws ecs describe-clusters --clusters $CLUSTER_NAME | grep ACTIVE || \

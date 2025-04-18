@@ -1,0 +1,7 @@
+aws ecs create-service \
+  --cluster fastapi-cluster \
+  --service-name fastapi-service \
+  --task-definition fastapi-task \
+  --desired-count 1 \
+  --launch-type FARGATE \
+  --network-configuration 'awsvpcConfiguration={subnets=["subnet-xxxxxxxx"],securityGroups=["sg-xxxxxxxx"],assignPublicIp="ENABLED"}'
