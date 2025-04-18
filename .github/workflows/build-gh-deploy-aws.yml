@@ -49,7 +49,12 @@ jobs:
           template: .github/ecs/ecs-stack.yml
           capabilities: CAPABILITY_NAMED_IAM
           no-fail-on-empty-changeset: true
-          parameter-overrides: file://parameters.json
+          parameter-overrides: >
+            ClusterName=fastapi-cluster
+            ServiceName=fastapi-service
+            ImageUri=public.ecr.aws/nginx/nginx:latest
+            SubnetIds=subnet-0931e3bf9f6b5c99d,subnet-07eea24ae9bd68fc8
+            SecurityGroupIds=sg-0aeddaa2d09e918e5
       
       - name: Register task definition
         run: |
