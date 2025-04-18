@@ -4,7 +4,8 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "256",
   "memory": "512",
-  "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::663610933134:role/github-actions-ecs-deploy",
+  "taskRoleArn": "arn:aws:iam::663610933134:role/ecsTaskRole"
   "containerDefinitions": [
     {
       "name": "fastapi",
