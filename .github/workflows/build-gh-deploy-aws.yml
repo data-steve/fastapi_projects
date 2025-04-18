@@ -13,6 +13,11 @@ permissions:
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: fastapi_social_media_app
+  CLUSTER_NAME: fastapi-cluster
+  SERVICE_NAME: fastapi-service
+  TASK_FAMILY: fastapi-task
+  CONTAINER_NAME: fastapi
+  IMAGE_TAG: latest
 
 jobs:
   build:
@@ -59,6 +64,11 @@ jobs:
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
+      - name: Ensure ECR repo exists
+        run: |
+          aws ecr describe-repositories --repository-names $ECR_REPOSITORY || \
+          aws ecr create-repository --repository-name $ECR_REPOSITORY
+
       - name: Login to ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
@@ -70,7 +80,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
 
   deploy:
     needs: build
@@ -83,6 +93,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Create ECS cluster if not exists
+        run: |
+          aws ecs describe-clusters --clusters $CLUSTER_NAME | grep ACTIVE || \
+          aws ecs create-cluster --cluster-name $CLUSTER_NAME
+          
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
