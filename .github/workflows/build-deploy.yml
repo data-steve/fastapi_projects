@@ -7,25 +7,22 @@ on: [push, pull_request]
 
 jobs:
   job1:
+    environment:
+      name: testing
+    env:
+      DATABASE_HOSTNAME=${{ secrets.DATABASE_HOSTNAME }}
+      DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+      DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+      DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+      DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+      SECRET_KEY=${{ secrets.SECRET_KEY }}
+      ALGORITHM=${{ secrets.ALGORITHM }}
+      ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
     runs-on: ubuntu-latest
     steps:
       - name: pull git repo 
         uses: actions/checkout@v4
-      - name: Inject secrets into environment
-        run: |
-          echo "DATABASE_HOSTNAME=${{ secrets.DATABASE_HOSTNAME }}" >> $GITHUB_ENV
-          echo "DATABASE_PORT=${{ secrets.DATABASE_PORT }}" >> $GITHUB_ENV
-          echo "DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}" >> $GITHUB_ENV
-          echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> $GITHUB_ENV
-          echo "DATABASE_NAME=${{ secrets.DATABASE_NAME }}" >> $GITHUB_ENV
-          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> $GITHUB_ENV
-          echo "ALGORITHM=${{ secrets.ALGORITHM }}" >> $GITHUB_ENV
-          echo "ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}" >> $GITHUB_ENV
-      - name: Dump DB env vars
-        run: |
-          echo "HOST ➜ $DATABASE_HOSTNAME"
-          # echo "PORT ➜ $DATABASE_PORT"
-          # echo "DB   ➜ $DATABASE_NAME"
+
       # - name: set up python v3.12
       #   uses: actions/setup-python@v5
       #   with:
