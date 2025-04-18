@@ -6,6 +6,10 @@ on: [push, pull_request]
   # pull_request:
   #   branches: [ main ]
 
+permissions:
+  contents: read      # default for checkout
+  id-token: write     # <—— this is the missing piece
+
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: fastapi_social_media_app
@@ -46,13 +50,14 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt pytest
-          pytest -v -s --disable-warnings
+          pytest --disable-warnings
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: arn:aws:iam::123456789012:role/YourCiCdRole
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Login to ECR
         id: login-ecr
@@ -74,8 +79,9 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: arn:aws:iam::123456789012:role/YourCiCdRole
 
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
