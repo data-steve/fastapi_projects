@@ -1,0 +1,87 @@
+name: Build & Deploy to ECS
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: fastapi_social_media_app
+
+jobs:
+  build:
+    environment:
+      name: testing
+    env:
+      DATABASE_PASSWORD               : ${{ secrets.DATABASE_PASSWORD }}
+      DATABASE_HOSTNAME               : ${{ secrets.DATABASE_HOSTNAME }}
+      DATABASE_PORT                   : ${{ secrets.DATABASE_PORT }}
+      DATABASE_NAME                   : ${{ secrets.DATABASE_NAME }}
+      DATABASE_USERNAME               : ${{ secrets.DATABASE_USERNAME }}
+      SECRET_KEY                      : ${{ secrets.SECRET_KEY }}
+      ALGORITHM                       : ${{ secrets.ALGORITHM }}
+      ACCESS_TOKEN_EXPIRE_MINUTES     : ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          POSTGRES_DB:   ${{ secrets.DATABASE_NAME }}_test
+        ports: [ "5432:5432" ]
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s --health-timeout=5s --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with: python-version: "3.12"
+      - name: Install & Test
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt pytest
+          pytest -v -s --disable-warnings
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::123456789012:role/YourCiCdRole
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push Image
+        id: build-and-push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::123456789012:role/YourCiCdRole
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ecs/taskdef.json
+          service:          fastapi-service
+          cluster:          fastapi-cluster
+          wait-for-service-stability: true
+          container-name:  fastapi
+          container-image: ${{ steps.build-and-push.outputs.tags }}

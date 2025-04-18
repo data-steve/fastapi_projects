@@ -1,0 +1,13 @@
+{
+    "family": "fastapi-task",
+    "containerDefinitions": [
+      {
+        "name": "fastapi",
+        "image": "PLACEHOLDER",
+        "portMappings": [ { "containerPort": 8000 } ],
+        …
+      }
+    ],
+    …
+  }
+  
