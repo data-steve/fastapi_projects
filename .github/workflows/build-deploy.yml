@@ -65,7 +65,7 @@ jobs:
         uses: docker/setup-qemu-action@v3
       -
         name: Set up Docker Buildx
-        id: buidx
+        id: buildx
         uses: docker/setup-buildx-action@v3
       -
         name: Build and push
