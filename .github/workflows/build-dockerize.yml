@@ -4,9 +4,6 @@ on: [push, pull_request]
   # pull_request:
   #   branches:
   #     - "master"
-env:
-  AWS_REGION: us‑east‑1
-  ECR_REPOSITORY: fastapi_social_media_app
 
 jobs:
   build:
@@ -57,41 +54,16 @@ jobs:
         run: |
           pip install pytest
           pytest -v -s --disable-warnings
-  
-  
-  # deploy:
-  #   name: 🚀 Deploy to ECS
-  #   needs: build
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v4
-  #       with:
-  #         aws-region: ${{ env.AWS_REGION }}
-  #         role-to-assume: arn:aws:iam::123456789012:role/YourCiCdRole
-
-  #     - name: Deploy new task definition to ECS
-  #       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-  #       with:
-  #         task-definition: ecs/taskdef.json
-  #         service:          fastapi-service
-  #         cluster:          fastapi-cluster
-  #         wait-for-service-stability: true
-  #         container-name:  fastapi
-  #         container-image: ${{ steps.build-and-push.outputs.image }}
-
-  
-      # not using docker now so commenting out to save build resources
   dockerize:
-      - 
-        name: Login to Docker Hub
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
-      -
-        name: Set up QEMU
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       -
         name: Set up Docker Buildx
