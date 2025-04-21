@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  ECS Fargate service for FastAPI, created for ephemeral CI/CD testing.
+
+Parameters:
+  ClusterName:
+    Type: String
+    Default: fastapi-test-cluster
+  ServiceName:
+    Type: String
+    Default: fastapi-test-service
+  ImageUri:
+    Type: String
+    Description: "The container image URI to deploy, e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com/myrepo:tag"
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: "At least two public subnet IDs in your default VPC"
+  SecurityGroupIds:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+    Description: "A security group which allows 0.0.0.0/0 on port 8000"
+
+Resources:
+  MyCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Ref ClusterName
+
+  TaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ClusterName}-exec-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  MyTaskDef:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Ref ServiceName
+      Cpu: '256'
+      Memory: '512'
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [ FARGATE ]
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: fastapi
+          Image: !Ref ImageUri
+          PortMappings:
+            - ContainerPort: 8000
+              Protocol: tcp
+
+  MyService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref MyCluster
+      ServiceName: !Ref ServiceName
+      LaunchType: FARGATE
+      DesiredCount: 1
+      TaskDefinition: !Ref MyTaskDef
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: 
+            - subnet-0931e3bf9f6b5c99d
+            - subnet-07eea24ae9bd68fc8
+          SecurityGroups: 
+            - sg-0aeddaa2d09e918e5
+
+Outputs:
+  ServiceArn:
+    Description: ARN of the ECS Service
+    Value: !Ref MyService
+  ClusterNameOut:
+    Description: Name of the ECS Cluster
+    Value: !Ref MyCluster

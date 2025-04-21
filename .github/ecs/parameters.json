@@ -1,0 +1,15 @@
+[
+    {
+      "ParameterKey": "ImageUri",
+      "ParameterValue": "public.ecr.aws/nginx/nginx:latest"
+    },
+    {
+      "ParameterKey": "SubnetIds",
+      "ParameterValue": "subnet-12345678,subnet-87654321"
+    },
+    {
+      "ParameterKey": "SecurityGroupIds",
+      "ParameterValue": "sg-12345678"
+    }
+  ]
+  

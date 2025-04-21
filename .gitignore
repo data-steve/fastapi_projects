@@ -2,3 +2,4 @@ __pycache__
 .env
 venv/
 pgadmin_config*
+.DS_store

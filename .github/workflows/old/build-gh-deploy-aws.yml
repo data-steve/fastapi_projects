@@ -1,0 +1,182 @@
+name: Build & Deploy to ECS
+
+on: [push, pull_request]
+  # push:
+  #   branches: [ cicd_actions ]
+  # pull_request:
+  #   branches: [ main ]
+
+permissions:
+  contents: read      # default for checkout
+  id-token: write     
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: fastapi_social_media_app
+  CLUSTER_NAME: fastapi-cluster
+  SERVICE_NAME: fastapi-service
+  STACK_NAME: fastapi-ecs-stack
+  IMAGE_URI: public.ecr.aws/nginx/nginx:latest  # temporary placeholder image
+  IMAGE_TAG: latest
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::663610933134:role/github-actions-ecs-deploy
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          # aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::663610933134:role/github-actions-ecs-deploy
+          role-session-name: GitHubActionsSession
+
+      - name: Deploy CloudFormation stack
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: fastapi-ecs-stack
+          template: .github/ecs/ecs-stack.yml
+          capabilities: CAPABILITY_NAMED_IAM
+          no-fail-on-empty-changeset: true
+          parameter-overrides: >
+            ClusterName=fastapi-cluster
+            ServiceName=fastapi-service
+            ImageUri=public.ecr.aws/nginx/nginx:latest
+            SubnetIds=subnet-0931e3bf9f6b5c99d,subnet-07eea24ae9bd68fc8
+            SecurityGroupIds=sg-0aeddaa2d09e918e5
+      
+      - name: Register task definition
+        run: |
+          aws ecs register-task-definition --cli-input-json file://.github/ecs/test_taskdef.json
+        
+      - name: Create ECS cluster if not exists
+        run: |
+          aws ecs describe-clusters --clusters $CLUSTER_NAME | grep ACTIVE || \
+          aws ecs create-cluster --cluster-name $CLUSTER_NAME
+
+      - name: Deploy to ECS
+        run: |
+          echo "Waiting for service to stabilize..."
+          aws ecs update-service \
+            --cluster $CLUSTER_NAME \
+            --service $SERVICE_NAME \
+            --desired-count 1
+          aws ecs wait services-stable --cluster $CLUSTER_NAME --services $SERVICE_NAME
+        # uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        # with:
+        #   task-definition:  .github/ecs/test_taskdef.json
+        #   service:          fastapi-service
+        #   cluster:          fastapi-cluster
+        #   wait-for-service-stability: true
+        #   # container-name:  fastapi
+        #   # container-image: 663610933134.dkr.ecr.us-east-1.amazonaws.com/fastapi_social_media_app:latest
+        #   # container-image: public.ecr.aws/nginx/nginx:latest
+      - name: Tear down ECS
+        run: |
+          echo "Tearing down ECS resources..."
+          aws ecs update-service --cluster $CLUSTER_NAME --service $SERVICE_NAME --desired-count 0 || true
+          aws ecs delete-service --cluster $CLUSTER_NAME --service $SERVICE_NAME --force || true
+          aws ecs delete-cluster --cluster $CLUSTER_NAME || true
+          aws ecr delete-repository --repository-name $ECR_REPOSITORY --force || true
+
+
+
+# jobs:
+#   build:
+#     environment:
+#       name: testing
+#     env:
+#       DATABASE_PASSWORD               : ${{ secrets.DATABASE_PASSWORD }}
+#       DATABASE_HOSTNAME               : ${{ secrets.DATABASE_HOSTNAME }}
+#       DATABASE_PORT                   : ${{ secrets.DATABASE_PORT }}
+#       DATABASE_NAME                   : ${{ secrets.DATABASE_NAME }}
+#       DATABASE_USERNAME               : ${{ secrets.DATABASE_USERNAME }}
+#       SECRET_KEY                      : ${{ secrets.SECRET_KEY }}
+#       ALGORITHM                       : ${{ secrets.ALGORITHM }}
+#       ACCESS_TOKEN_EXPIRE_MINUTES     : ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
+#     runs-on: ubuntu-latest
+#     services:
+#       postgres:
+#         image: postgres:15
+#         env:
+#           POSTGRES_USER: postgres
+#           POSTGRES_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+#           POSTGRES_DB:   ${{ secrets.DATABASE_NAME }}_test
+#         ports: [ "5432:5432" ]
+#         options: >-
+#           --health-cmd="pg_isready -U postgres"
+#           --health-interval=10s --health-timeout=5s --health-retries=5
+
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Set up Python
+#         uses: actions/setup-python@v5
+#         with: 
+#           python-version: "3.12"
+#       - name: Install & Test
+#         run: |
+#           pip install --upgrade pip
+#           pip install -r requirements.txt pytest
+#           pytest --disable-warnings
+
+#       - name: Configure AWS Credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-region: ${{ env.AWS_REGION }}
+#           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+#       - name: Ensure ECR repo exists
+#         run: |
+#           aws ecr describe-repositories --repository-names $ECR_REPOSITORY || \
+#           aws ecr create-repository --repository-name $ECR_REPOSITORY
+
+#       - name: Login to ECR
+#         id: login-ecr
+#         uses: aws-actions/amazon-ecr-login@v2
+
+#       - name: Build & Push Image
+#         id: build-and-push
+#         uses: docker/build-push-action@v6
+#         with:
+#           context: .
+#           file: ./Dockerfile
+#           push: true
+#           tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+
+#   deploy:
+#     needs: build
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Configure AWS Credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ env.AWS_REGION }}
+
+#       - name: Create ECS cluster if not exists
+#         run: |
+#           aws ecs describe-clusters --clusters $CLUSTER_NAME | grep ACTIVE || \
+#           aws ecs create-cluster --cluster-name $CLUSTER_NAME
+          
+#       - name: Deploy to ECS
+#         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+#         with:
+#           task-definition: ecs/taskdef.json
+#           service:          fastapi-service
+#           cluster:          fastapi-cluster
+#           wait-for-service-stability: true
+#           container-name:  fastapi
+#           container-image: ${{ steps.build-and-push.outputs.tags }}
